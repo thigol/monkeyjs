@@ -1,3 +1,4 @@
+// ======== CONFIGURAÇÃO INICIAL ========
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 const menuDiv = document.getElementById("menu");
@@ -8,33 +9,34 @@ const btnScores = document.getElementById("btn-scores");
 const btnBack = document.getElementById("btn-back");
 const scoreList = document.getElementById("score-list");
 
-// Ajusta o tamanho do canvas conforme a janela
-function resizeCanvas() {
-  const scale = Math.min(window.innerWidth / 800, window.innerHeight / 600);
-  canvas.width = 800 * scale;
-  canvas.height = 600 * scale;
-  ctx.setTransform(scale, 0, 0, scale, 0, 0); // redimensiona tudo proporcionalmente
-}
-
-window.addEventListener("resize", resizeCanvas);
-resizeCanvas();
-
 // Sons
 const correctSound = new Audio("correct.wav");
 const wrongSound = new Audio("wrong.ogg");
 
+// Campo de entrada invisível (para teclado móvel)
+const input = document.createElement("input");
+input.type = "text";
+input.style.position = "absolute";
+input.style.opacity = "0";
+input.style.pointerEvents = "none";
+input.autocapitalize = "off";
+input.autocomplete = "off";
+input.spellcheck = false;
+document.body.appendChild(input);
+
+// ======== VARIÁVEIS DO JOGO ========
 let gameState = "menu";
 let bananas = 0, maxBananas = 0;
 let question = "", correctAnswer = 0, userAnswer = "";
 let highScores = [0, 0, 0];
 let monkeyFrame = 0;
 
+// ======== CARREGAMENTO DE IMAGENS ========
 const images = {};
 const names = [
   "background.png", "menu_background.png", "score_background.png",
   "monkey_idle.png", "monkey_blink.png", "basket.png", "banana.png"
 ];
-
 let loaded = 0;
 for (let n of names) {
   const img = new Image();
@@ -46,6 +48,17 @@ for (let n of names) {
   images[n] = img;
 }
 
+// ======== AJUSTE DE TELA (RESPONSIVO) ========
+function resizeCanvas() {
+  const scale = Math.min(window.innerWidth / 800, window.innerHeight / 600);
+  canvas.width = 800 * scale;
+  canvas.height = 600 * scale;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// ======== FUNÇÕES DE DESENHO ========
 function drawTextPlaque(text, x, y, w, h, color="#FFF", bg="#6B8E23") {
   ctx.fillStyle = "white";
   ctx.fillRect(x - 5, y - 5, w + 10, h + 10);
@@ -66,7 +79,7 @@ function generateQuestion() {
   switch(op){
     case "+": return [`${n1}+${n2}`, n1+n2];
     case "-": return [`${n1}-${n2}`, n1-n2];
-    case "*": return [`${n1}*${n2}`, n1*n2];
+    case "*": return [`${n1}×${n2}`, n1*n2];
     case "/": return [`${n1*n2}/${n2}`, n1];
   }
 }
@@ -93,11 +106,14 @@ function drawGame() {
   drawTextPlaque(`Bananas: ${bananas}`, 250, 150, 300, 50);
 }
 
+// ======== FLUXO DE JOGO ========
 function startGame() {
   menuDiv.classList.add("hidden");
   scoresDiv.classList.add("hidden");
   canvas.style.display = "block";
   document.body.classList.add("playing");
+  input.focus(); // ativa teclado no mobile
+
   if (music.paused) music.play();
 
   bananas = 0;
@@ -142,10 +158,11 @@ function showScores() {
   });
 }
 
-document.addEventListener("keydown", e=>{
-  if(gameState==="game"){
-    if(e.key==="Enter"){
-      if(parseInt(userAnswer)==correctAnswer){
+// ======== DIGITAÇÃO / ENTRADA ========
+function handleKey(key) {
+  if (gameState === "game") {
+    if (key === "Enter") {
+      if (parseInt(userAnswer) === correctAnswer) {
         correctSound.play();
         bananas++;
         maxBananas=Math.max(maxBananas,bananas);
@@ -153,21 +170,40 @@ document.addEventListener("keydown", e=>{
         userAnswer="";
       } else {
         wrongSound.play();
-        if(bananas>0) bananas=0;
+        if (bananas>0) bananas=0;
         else endGame();
       }
-    } else if(e.key==="Backspace"){
+    } else if (key === "Backspace") {
       userAnswer=userAnswer.slice(0,-1);
-    // Permite dígitos e sinal de menos no início
-    } else if (e.key === "-" && userAnswer.length === 0) {
+    } else if (key === "-" && userAnswer.length===0) {
       userAnswer = "-";
-    } else if (/\d/.test(e.key)) {
-      userAnswer += e.key;
+    } else if (/\d/.test(key)) {
+      userAnswer += key;
     }
+  }
+}
 
+// Teclado físico (PC)
+document.addEventListener("keydown", e => handleKey(e.key));
+
+// Entrada virtual (celular)
+canvas.addEventListener("touchstart", () => input.focus());
+canvas.addEventListener("click", () => input.focus());
+
+input.addEventListener("input", e => {
+  const value = e.target.value;
+  if (value.endsWith("\n")) {
+    handleKey("Enter");
+    e.target.value = "";
+  } else if (value.length > userAnswer.length) {
+    const newChar = value.slice(-1);
+    handleKey(newChar);
+  } else if (value.length < userAnswer.length) {
+    handleKey("Backspace");
   }
 });
 
+// ======== BOTÕES ========
 btnStart.onclick = startGame;
 btnScores.onclick = showScores;
 btnBack.onclick = drawMenu;
