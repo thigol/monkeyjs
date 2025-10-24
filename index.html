@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Monkey Math Game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="menu">
+    <img src="menu_background.png" id="menu-bg" />
+    <h1>🐵 Monkey Math Game 🧮</h1>
+    <button id="btn-start">Novo Jogo</button>
+    <button id="btn-scores">High Scores</button>
+    <audio id="music" src="background_music.wav" loop></audio>
+  </div>
+
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+  <div id="scores" class="overlay hidden">
+    <img src="score_background.png" id="score-bg" />
+    <h2>🏆 High Scores</h2>
+    <ul id="score-list"></ul>
+    <button id="btn-back">Voltar</button>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
+
