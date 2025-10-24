@@ -44,4 +44,4 @@ O objetivo é resolver operações matemáticas simples o mais rápido possível
 
 ## 🚀 **Como Jogar Online**
 
-Acesse o link:
+Acesse o link: https://thigol.github.io/monkeyjs/
