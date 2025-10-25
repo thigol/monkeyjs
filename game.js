@@ -67,13 +67,10 @@ resizeCanvas();
 // ======== DETECÇÃO DO TECLADO MÓVEL ========
 if ("visualViewport" in window) {
   window.visualViewport.addEventListener("resize", () => {
-    // Quando o teclado aparece, a altura da viewport diminui
     const keyboardVisible = window.visualViewport.height < window.innerHeight * 0.9;
     if (keyboardVisible) {
-      // Sobe o canvas pra não ficar escondido
       canvas.style.transform = "translate(-50%, -60%)";
     } else {
-      // Restaura posição normal
       canvas.style.transform = "translate(-50%, -50%)";
     }
   });
@@ -183,6 +180,7 @@ function showScores() {
 function handleKey(key) {
   if (gameState === "game") {
     if (key === "Enter") {
+      input.value = ""; // limpa campo invisível (corrige bug do PC)
       if (parseInt(userAnswer) === correctAnswer) {
         correctSound.play();
         bananas++;
@@ -211,17 +209,30 @@ document.addEventListener("keydown", e => handleKey(e.key));
 canvas.addEventListener("touchstart", () => input.focus());
 canvas.addEventListener("click", () => input.focus());
 
+// ======== CORREÇÃO DO BUG DO CARACTERE INVISÍVEL ========
 input.addEventListener("input", e => {
-  const value = e.target.value;
-  if (value.endsWith("\n")) {
+  let value = e.target.value.trim();
+
+  if (value.endsWith("\n") || value.endsWith("\r")) {
     handleKey("Enter");
     e.target.value = "";
-  } else if (value.length > userAnswer.length) {
+    return;
+  }
+
+  if (/[\r\n]/.test(value)) {
+    value = value.replace(/[\r\n]/g, "");
+    e.target.value = value;
+  }
+
+  if (value.length > userAnswer.length) {
     const newChar = value.slice(-1);
     handleKey(newChar);
   } else if (value.length < userAnswer.length) {
     handleKey("Backspace");
   }
+
+  // Limpa qualquer resíduo imediatamente
+  setTimeout(() => (e.target.value = ""), 10);
 });
 
 // ======== BOTÕES ========
