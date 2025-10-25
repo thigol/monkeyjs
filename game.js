@@ -54,9 +54,30 @@ function resizeCanvas() {
   canvas.width = 800 * scale;
   canvas.height = 600 * scale;
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
+
+  // Centraliza o canvas
+  canvas.style.left = "50%";
+  canvas.style.top = "50%";
+  canvas.style.transform = "translate(-50%, -50%)";
+  canvas.style.position = "absolute";
 }
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
+
+// ======== DETECÇÃO DO TECLADO MÓVEL ========
+if ("visualViewport" in window) {
+  window.visualViewport.addEventListener("resize", () => {
+    // Quando o teclado aparece, a altura da viewport diminui
+    const keyboardVisible = window.visualViewport.height < window.innerHeight * 0.9;
+    if (keyboardVisible) {
+      // Sobe o canvas pra não ficar escondido
+      canvas.style.transform = "translate(-50%, -60%)";
+    } else {
+      // Restaura posição normal
+      canvas.style.transform = "translate(-50%, -50%)";
+    }
+  });
+}
 
 // ======== FUNÇÕES DE DESENHO ========
 function drawTextPlaque(text, x, y, w, h, color="#FFF", bg="#6B8E23") {
