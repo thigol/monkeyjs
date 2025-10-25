@@ -55,7 +55,6 @@ function resizeCanvas() {
   canvas.height = 600 * scale;
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
 
-  // Centraliza o canvas
   canvas.style.left = "50%";
   canvas.style.top = "50%";
   canvas.style.transform = "translate(-50%, -50%)";
@@ -130,7 +129,7 @@ function startGame() {
   scoresDiv.classList.add("hidden");
   canvas.style.display = "block";
   document.body.classList.add("playing");
-  input.focus(); // ativa teclado no mobile
+  input.focus();
 
   if (music.paused) music.play();
 
@@ -180,7 +179,7 @@ function showScores() {
 function handleKey(key) {
   if (gameState === "game") {
     if (key === "Enter") {
-      input.value = ""; // limpa campo invisível (corrige bug do PC)
+      input.value = "";
       if (parseInt(userAnswer) === correctAnswer) {
         correctSound.play();
         bananas++;
@@ -209,21 +208,18 @@ document.addEventListener("keydown", e => handleKey(e.key));
 canvas.addEventListener("touchstart", () => input.focus());
 canvas.addEventListener("click", () => input.focus());
 
-// ======== CORREÇÃO DO BUG DO CARACTERE INVISÍVEL ========
+// ======== CORREÇÃO DO CARACTERE INVISÍVEL E ENTRADA MÚLTIPLA ========
 input.addEventListener("input", e => {
-  let value = e.target.value.trim();
+  let value = e.target.value.replace(/[\r\n]/g, ""); // remove quebras invisíveis
 
+  // Enter no teclado móvel
   if (value.endsWith("\n") || value.endsWith("\r")) {
     handleKey("Enter");
     e.target.value = "";
     return;
   }
 
-  if (/[\r\n]/.test(value)) {
-    value = value.replace(/[\r\n]/g, "");
-    e.target.value = value;
-  }
-
+  // Verifica diferença de tamanho
   if (value.length > userAnswer.length) {
     const newChar = value.slice(-1);
     handleKey(newChar);
@@ -231,8 +227,10 @@ input.addEventListener("input", e => {
     handleKey("Backspace");
   }
 
-  // Limpa qualquer resíduo imediatamente
-  setTimeout(() => (e.target.value = ""), 10);
+  // Mantém o campo limpo apenas quando necessário
+  if (value.includes("\n") || value.includes("\r")) {
+    e.target.value = "";
+  }
 });
 
 // ======== BOTÕES ========
