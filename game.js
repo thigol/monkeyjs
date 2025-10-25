@@ -88,24 +88,24 @@ function drawTextPlaque(text, x, y, w, h, color="#FFF", bg="#6B8E23") {
 }
 
 function generateQuestion() {
-  const n1 = Math.floor(Math.random()*10)+1;
-  const n2 = Math.floor(Math.random()*10)+1;
-  const ops = ["+","-","*","/"];
-  const op = ops[Math.floor(Math.random()*ops.length)];
-  switch(op){
-    case "+": return [`${n1}+${n2}`, n1+n2];
-    case "-": return [`${n1}-${n2}`, n1-n2];
-    case "*": return [`${n1}×${n2}`, n1*n2];
-    case "/": return [`${n1*n2}/${n2}`, n1];
+  const n1 = Math.floor(Math.random() * 10) + 1;
+  const n2 = Math.floor(Math.random() * 10) + 1;
+  const ops = ["+", "-", "*", "/"];
+  const op = ops[Math.floor(Math.random() * ops.length)];
+  switch (op) {
+    case "+": return [`${n1}+${n2}`, n1 + n2];
+    case "-": return [`${n1}-${n2}`, n1 - n2];
+    case "*": return [`${n1}×${n2}`, n1 * n2];
+    case "/": return [`${n1 * n2}/${n2}`, n1];
   }
 }
 
 function drawBananas() {
   const maxPerColumn = 20, colSpace = 30, rowSpace = 15;
-  for(let i=0;i<bananas;i++){
-    const col = Math.floor(i/maxPerColumn);
-    const row = i%maxPerColumn;
-    const x = 210+col*colSpace, y = 430-row*rowSpace;
+  for (let i = 0; i < bananas; i++) {
+    const col = Math.floor(i / maxPerColumn);
+    const row = i % maxPerColumn;
+    const x = 210 + col * colSpace, y = 430 - row * rowSpace;
     ctx.drawImage(images["banana.png"], x, y);
   }
 }
@@ -113,7 +113,9 @@ function drawBananas() {
 function drawGame() {
   ctx.drawImage(images["background.png"], 0, 0, 800, 600);
   monkeyFrame++;
-  const img = (Math.floor(monkeyFrame/60)%2===0)?images["monkey_idle.png"]:images["monkey_blink.png"];
+  const img = (Math.floor(monkeyFrame / 60) % 2 === 0)
+    ? images["monkey_idle.png"]
+    : images["monkey_blink.png"];
   ctx.drawImage(img, 100, 200);
   ctx.drawImage(images["basket.png"], 200, 400);
   drawBananas();
@@ -146,8 +148,8 @@ function loop() {
 
 function endGame() {
   highScores.push(maxBananas);
-  highScores.sort((a,b)=>b-a);
-  highScores = highScores.slice(0,3);
+  highScores.sort((a, b) => b - a);
+  highScores = highScores.slice(0, 3);
   gameState = "menu";
   canvas.style.display = "none";
   document.body.classList.remove("playing");
@@ -164,51 +166,68 @@ function showScores() {
   menuDiv.classList.add("hidden");
   scoresDiv.classList.remove("hidden");
   scoreList.innerHTML = "";
-  highScores.forEach((s,i)=>{
+  highScores.forEach((s, i) => {
     const li = document.createElement("li");
-    li.textContent = `${i+1}. ${s}`;
+    li.textContent = `${i + 1}. ${s}`;
     scoreList.appendChild(li);
   });
 }
 
-// ======== DIGITAÇÃO / ENTRADA ========
+// ======== DIGITAÇÃO / ENTRADA (VERSÃO FINAL CORRIGIDA) ========
 function setUserAnswerFromInput(raw) {
   let s = (raw ?? "").replace(/[^\d-]/g, "");
-  if (s.includes("-")) s = (s[0]==="-"?"-":"")+s.replace(/-/g,"").replace(/^-/, "");
-  if (/^-?\d*$/.test(s)) { userAnswer = s; input.value = s; }
-  else { userAnswer = ""; input.value = ""; }
+  if (s.includes("-")) s = (s[0] === "-" ? "-" : "") + s.replace(/-/g, "").replace(/^-/, "");
+  if (/^-?\d*$/.test(s)) {
+    userAnswer = s;
+    input.value = s;
+  } else {
+    userAnswer = "";
+    input.value = "";
+  }
 }
 
 function handleKey(key) {
   if (gameState !== "game") return;
+
   if (key === "Enter") {
     input.value = "";
     if (parseInt(userAnswer) === correctAnswer) {
       correctSound.play();
-      bananas++; maxBananas = Math.max(maxBananas,bananas);
+      bananas++;
+      maxBananas = Math.max(maxBananas, bananas);
       [question, correctAnswer] = generateQuestion();
-      userAnswer = ""; input.value = "";
+      userAnswer = "";
+      input.value = "";
     } else {
       wrongSound.play();
-      if (bananas > 0) bananas = 0; else endGame();
+      if (bananas > 0) bananas = 0;
+      else endGame();
     }
     return;
   }
-  if (key === "Backspace") return setUserAnswerFromInput(userAnswer.slice(0,-1));
-  if (key === "-" && userAnswer.length===0) return setUserAnswerFromInput("-");
+
+  if (key === "Backspace") return setUserAnswerFromInput(userAnswer.slice(0, -1));
+  if (key === "-" && userAnswer.length === 0) return setUserAnswerFromInput("-");
   if (/\d/.test(key)) return setUserAnswerFromInput(userAnswer + key);
 }
 
-// Teclado físico
-document.addEventListener("keydown", e => handleKey(e.key));
-
-// Entrada virtual
-input.addEventListener("input", e => {
-  if (e.target.value.endsWith("\n") || e.target.value.endsWith("\r")) {
-    handleKey("Enter"); e.target.value = "";
-  } else setUserAnswerFromInput(e.target.value);
+// 🔹 Teclado físico (PC)
+document.addEventListener("keydown", e => {
+  if (document.activeElement !== input) handleKey(e.key);
 });
 
+// 🔹 Entrada virtual (celular)
+input.addEventListener("input", e => {
+  const val = e.target.value;
+  if (val.endsWith("\n") || val.endsWith("\r")) {
+    handleKey("Enter");
+    e.target.value = "";
+  } else {
+    setUserAnswerFromInput(val);
+  }
+});
+
+// 🔹 Foco do input invisível no Canvas (para abrir teclado móvel)
 canvas.addEventListener("touchstart", () => input.focus());
 canvas.addEventListener("click", () => input.focus());
 
