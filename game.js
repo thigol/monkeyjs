@@ -13,31 +13,44 @@ const scoreList = document.getElementById("score-list");
 const correctSound = new Audio("correct.wav");
 const wrongSound = new Audio("wrong.ogg");
 
-// ======== VARIÁVEIS DO JOGO ========
+// Campo invisível (para abrir o teclado no celular)
+const input = document.createElement("input");
+input.type = "text";
+input.style.position = "absolute";
+input.style.opacity = "0";
+input.style.zIndex = "-1";
+input.autocapitalize = "off";
+input.autocomplete = "off";
+input.spellcheck = false;
+input.inputMode = "decimal";
+input.enterKeyHint = "done";
+document.body.appendChild(input);
+
+// ======== VARIÁVEIS ========
 let gameState = "menu";
 let bananas = 0, maxBananas = 0;
 let question = "", correctAnswer = 0, userAnswer = "";
 let highScores = [0, 0, 0];
 let monkeyFrame = 0;
 
-// ======== CARREGAMENTO DE IMAGENS ========
+// ======== IMAGENS ========
 const images = {};
-const names = [
+const imgNames = [
   "background.png", "menu_background.png", "score_background.png",
   "monkey_idle.png", "monkey_blink.png", "basket.png", "banana.png"
 ];
 let loaded = 0;
-for (let n of names) {
+for (let n of imgNames) {
   const img = new Image();
   img.src = n;
   img.onload = () => {
     loaded++;
-    if (loaded === names.length) drawMenu();
+    if (loaded === imgNames.length) drawMenu();
   };
   images[n] = img;
 }
 
-// ======== AJUSTE DE TELA (RESPONSIVO) ========
+// ======== TELA ========
 function resizeCanvas() {
   const scale = Math.min(window.innerWidth / 800, window.innerHeight / 600);
   canvas.width = 800 * scale;
@@ -51,7 +64,7 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-// ======== FUNÇÕES DE DESENHO ========
+// ======== DESENHO ========
 function drawTextPlaque(text, x, y, w, h, color="#FFF", bg="#6B8E23") {
   ctx.fillStyle = "white";
   ctx.fillRect(x - 5, y - 5, w + 10, h + 10);
@@ -65,24 +78,24 @@ function drawTextPlaque(text, x, y, w, h, color="#FFF", bg="#6B8E23") {
 }
 
 function generateQuestion() {
-  const n1 = Math.floor(Math.random() * 10) + 1;
-  const n2 = Math.floor(Math.random() * 10) + 1;
-  const ops = ["+", "-", "*", "/"];
-  const op = ops[Math.floor(Math.random() * ops.length)];
-  switch (op) {
-    case "+": return [`${n1}+${n2}`, n1 + n2];
-    case "-": return [`${n1}-${n2}`, n1 - n2];
-    case "*": return [`${n1}×${n2}`, n1 * n2];
+  const n1 = Math.floor(Math.random()*10)+1;
+  const n2 = Math.floor(Math.random()*10)+1;
+  const ops = ["+","-","*","/"];
+  const op = ops[Math.floor(Math.random()*ops.length)];
+  switch(op){
+    case "+": return [`${n1}+${n2}`, n1+n2];
+    case "-": return [`${n1}-${n2}`, n1-n2];
+    case "*": return [`${n1}×${n2}`, n1*n2];
     case "/": return [`${n1*n2}/${n2}`, n1];
   }
 }
 
 function drawBananas() {
   const maxPerColumn = 20, colSpace = 30, rowSpace = 15;
-  for (let i = 0; i < bananas; i++) {
-    const col = Math.floor(i / maxPerColumn);
-    const row = i % maxPerColumn;
-    const x = 210 + col * colSpace, y = 430 - row * rowSpace;
+  for(let i=0;i<bananas;i++){
+    const col = Math.floor(i/maxPerColumn);
+    const row = i%maxPerColumn;
+    const x = 210+col*colSpace, y = 430-row*rowSpace;
     ctx.drawImage(images["banana.png"], x, y);
   }
 }
@@ -90,9 +103,7 @@ function drawBananas() {
 function drawGame() {
   ctx.drawImage(images["background.png"], 0, 0, 800, 600);
   monkeyFrame++;
-  const img = (Math.floor(monkeyFrame / 60) % 2 === 0)
-    ? images["monkey_idle.png"]
-    : images["monkey_blink.png"];
+  const img = (Math.floor(monkeyFrame/60)%2===0)?images["monkey_idle.png"]:images["monkey_blink.png"];
   ctx.drawImage(img, 100, 200);
   ctx.drawImage(images["basket.png"], 200, 400);
   drawBananas();
@@ -101,7 +112,7 @@ function drawGame() {
   drawTextPlaque(`Bananas: ${bananas}`, 250, 150, 300, 50);
 }
 
-// ======== FLUXO DE JOGO ========
+// ======== FLUXO ========
 function startGame() {
   menuDiv.classList.add("hidden");
   scoresDiv.classList.add("hidden");
@@ -112,6 +123,7 @@ function startGame() {
   [question, correctAnswer] = generateQuestion();
   userAnswer = "";
   gameState = "game";
+  input.focus(); // força teclado no celular
   loop();
 }
 
@@ -124,8 +136,8 @@ function loop() {
 
 function endGame() {
   highScores.push(maxBananas);
-  highScores.sort((a, b) => b - a);
-  highScores = highScores.slice(0, 3);
+  highScores.sort((a,b)=>b-a);
+  highScores = highScores.slice(0,3);
   gameState = "menu";
   canvas.style.display = "none";
   document.body.classList.remove("playing");
@@ -144,14 +156,61 @@ function showScores() {
   menuDiv.classList.add("hidden");
   scoresDiv.classList.remove("hidden");
   scoreList.innerHTML = "";
-  highScores.forEach((s, i) => {
+  highScores.forEach((s,i)=>{
     const li = document.createElement("li");
-    li.textContent = `${i + 1}. ${s}`;
+    li.textContent = `${i+1}. ${s}`;
     scoreList.appendChild(li);
   });
 }
 
-// ======== ENTRADA DE DADOS SIMPLIFICADA ========
-// funciona em PC e celular sem duplicar
+// ======== ENTRADA ========
+document.addEventListener("keydown", e => {
+  if (gameState !== "game") return;
 
-document.addEventListener("ke
+  const key = e.key;
+  if (key === "Enter") {
+    if (parseInt(userAnswer) === correctAnswer) {
+      correctSound.play();
+      bananas++;
+      maxBananas = Math.max(maxBananas, bananas);
+      [question, correctAnswer] = generateQuestion();
+      userAnswer = "";
+    } else {
+      wrongSound.play();
+      if (bananas > 0) bananas = 0;
+      else endGame();
+    }
+  } else if (key === "Backspace") {
+    userAnswer = userAnswer.slice(0,-1);
+  } else if (key === "-" && userAnswer.length===0) {
+    userAnswer = "-";
+  } else if (/\d/.test(key)) {
+    userAnswer += key;
+  }
+});
+
+// Entrada do teclado móvel
+input.addEventListener("input", e => {
+  const val = e.target.value.trim();
+  if (val.endsWith("\n") || val.endsWith("\r")) {
+    e.target.value = "";
+    const evt = new KeyboardEvent("keydown", { key: "Enter" });
+    document.dispatchEvent(evt);
+  } else if (val.length > 0) {
+    const key = val[val.length - 1];
+    if (/\d/.test(key) || key === "-") {
+      const evt = new KeyboardEvent("keydown", { key });
+      document.dispatchEvent(evt);
+    }
+    e.target.value = "";
+  }
+});
+
+// Foca o input ao tocar no canvas
+canvas.addEventListener("touchstart", () => input.focus());
+canvas.addEventListener("click", () => input.focus());
+
+// ======== BOTÕES ========
+btnStart.onclick = startGame;
+btnScores.onclick = showScores;
+btnBack.onclick = drawMenu;
