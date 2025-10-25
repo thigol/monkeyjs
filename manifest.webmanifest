@@ -1,0 +1,14 @@
+{
+  "name": "Monkey Math Game",
+  "short_name": "MonkeyMath",
+  "description": "Ajude o macaquinho a resolver contas e ganhar bananas!",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#6B8E23",
+  "orientation": "landscape",
+  "icons": [
+    { "src": "monkey_idle.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "monkey_idle.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
