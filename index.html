@@ -1,29 +1,36 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Monkey Math Game</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js")
+        .then(() => console.log("Service Worker registrado com sucesso!"))
+        .catch(err => console.log("Erro ao registrar SW:", err));
+    }
+  </script>
 </head>
+
 <body>
-  <div id="menu">
-    <img src="menu_background.png" id="menu-bg" />
-    <h1>🐵 Monkey Math Game 🧮</h1>
+  <div id="menu" class="menu">
+    <h1>🐵 Monkey Math Game</h1>
     <button id="btn-start">Novo Jogo</button>
-    <button id="btn-scores">High Scores</button>
-    <audio id="music" src="background_music.wav" loop></audio>
+    <button id="btn-scores">Melhores Pontuações</button>
   </div>
 
-  <canvas id="gameCanvas" width="800" height="600"></canvas>
-
-  <div id="scores" class="overlay hidden">
-    <img src="score_background.png" id="score-bg" />
+  <div id="scores" class="hidden">
     <h2>🏆 High Scores</h2>
     <ul id="score-list"></ul>
     <button id="btn-back">Voltar</button>
   </div>
 
+  <canvas id="gameCanvas" width="800" height="600"></canvas>
+  <audio id="music" src="background_music.wav" loop></audio>
   <script src="game.js"></script>
 </body>
 </html>
-
