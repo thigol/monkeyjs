@@ -13,19 +13,6 @@ const scoreList = document.getElementById("score-list");
 const correctSound = new Audio("correct.wav");
 const wrongSound = new Audio("wrong.ogg");
 
-// Campo de entrada invisível (para teclado móvel)
-const input = document.createElement("input");
-input.type = "text";
-input.style.position = "absolute";
-input.style.opacity = "0";
-input.style.pointerEvents = "none";
-input.autocapitalize = "off";
-input.autocomplete = "off";
-input.spellcheck = false;
-input.inputMode = "decimal";
-input.enterKeyHint = "done";
-document.body.appendChild(input);
-
 // ======== VARIÁVEIS DO JOGO ========
 let gameState = "menu";
 let bananas = 0, maxBananas = 0;
@@ -64,16 +51,6 @@ function resizeCanvas() {
 window.addEventListener("resize", resizeCanvas);
 resizeCanvas();
 
-// ======== DETECÇÃO DO TECLADO MÓVEL ========
-if ("visualViewport" in window) {
-  window.visualViewport.addEventListener("resize", () => {
-    const keyboardVisible = window.visualViewport.height < window.innerHeight * 0.9;
-    canvas.style.transform = keyboardVisible
-      ? "translate(-50%, -60%)"
-      : "translate(-50%, -50%)";
-  });
-}
-
 // ======== FUNÇÕES DE DESENHO ========
 function drawTextPlaque(text, x, y, w, h, color="#FFF", bg="#6B8E23") {
   ctx.fillStyle = "white";
@@ -96,7 +73,7 @@ function generateQuestion() {
     case "+": return [`${n1}+${n2}`, n1 + n2];
     case "-": return [`${n1}-${n2}`, n1 - n2];
     case "*": return [`${n1}×${n2}`, n1 * n2];
-    case "/": return [`${n1 * n2}/${n2}`, n1];
+    case "/": return [`${n1*n2}/${n2}`, n1];
   }
 }
 
@@ -130,11 +107,10 @@ function startGame() {
   scoresDiv.classList.add("hidden");
   canvas.style.display = "block";
   document.body.classList.add("playing");
-  input.focus();
   if (music.paused) music.play();
   bananas = 0; maxBananas = 0;
   [question, correctAnswer] = generateQuestion();
-  userAnswer = ""; input.value = "";
+  userAnswer = "";
   gameState = "game";
   loop();
 }
@@ -157,12 +133,14 @@ function endGame() {
 }
 
 function drawMenu() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   menuDiv.classList.remove("hidden");
   scoresDiv.classList.add("hidden");
   canvas.style.display = "none";
 }
 
 function showScores() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
   menuDiv.classList.add("hidden");
   scoresDiv.classList.remove("hidden");
   scoreList.innerHTML = "";
@@ -173,65 +151,7 @@ function showScores() {
   });
 }
 
-// ======== DIGITAÇÃO / ENTRADA (VERSÃO FINAL CORRIGIDA) ========
-function setUserAnswerFromInput(raw) {
-  let s = (raw ?? "").replace(/[^\d-]/g, "");
-  if (s.includes("-")) s = (s[0] === "-" ? "-" : "") + s.replace(/-/g, "").replace(/^-/, "");
-  if (/^-?\d*$/.test(s)) {
-    userAnswer = s;
-    input.value = s;
-  } else {
-    userAnswer = "";
-    input.value = "";
-  }
-}
+// ======== ENTRADA DE DADOS SIMPLIFICADA ========
+// funciona em PC e celular sem duplicar
 
-function handleKey(key) {
-  if (gameState !== "game") return;
-
-  if (key === "Enter") {
-    input.value = "";
-    if (parseInt(userAnswer) === correctAnswer) {
-      correctSound.play();
-      bananas++;
-      maxBananas = Math.max(maxBananas, bananas);
-      [question, correctAnswer] = generateQuestion();
-      userAnswer = "";
-      input.value = "";
-    } else {
-      wrongSound.play();
-      if (bananas > 0) bananas = 0;
-      else endGame();
-    }
-    return;
-  }
-
-  if (key === "Backspace") return setUserAnswerFromInput(userAnswer.slice(0, -1));
-  if (key === "-" && userAnswer.length === 0) return setUserAnswerFromInput("-");
-  if (/\d/.test(key)) return setUserAnswerFromInput(userAnswer + key);
-}
-
-// 🔹 Teclado físico (PC)
-document.addEventListener("keydown", e => {
-  if (document.activeElement !== input) handleKey(e.key);
-});
-
-// 🔹 Entrada virtual (celular)
-input.addEventListener("input", e => {
-  const val = e.target.value;
-  if (val.endsWith("\n") || val.endsWith("\r")) {
-    handleKey("Enter");
-    e.target.value = "";
-  } else {
-    setUserAnswerFromInput(val);
-  }
-});
-
-// 🔹 Foco do input invisível no Canvas (para abrir teclado móvel)
-canvas.addEventListener("touchstart", () => input.focus());
-canvas.addEventListener("click", () => input.focus());
-
-// ======== BOTÕES ========
-btnStart.onclick = startGame;
-btnScores.onclick = showScores;
-btnBack.onclick = drawMenu;
+document.addEventListener("ke
