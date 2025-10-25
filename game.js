@@ -22,6 +22,8 @@ input.style.pointerEvents = "none";
 input.autocapitalize = "off";
 input.autocomplete = "off";
 input.spellcheck = false;
+input.inputMode = "decimal";
+input.enterKeyHint = "done";
 document.body.appendChild(input);
 
 // ======== VARIÁVEIS DO JOGO ========
@@ -54,7 +56,6 @@ function resizeCanvas() {
   canvas.width = 800 * scale;
   canvas.height = 600 * scale;
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
-
   canvas.style.left = "50%";
   canvas.style.top = "50%";
   canvas.style.transform = "translate(-50%, -50%)";
@@ -67,11 +68,9 @@ resizeCanvas();
 if ("visualViewport" in window) {
   window.visualViewport.addEventListener("resize", () => {
     const keyboardVisible = window.visualViewport.height < window.innerHeight * 0.9;
-    if (keyboardVisible) {
-      canvas.style.transform = "translate(-50%, -60%)";
-    } else {
-      canvas.style.transform = "translate(-50%, -50%)";
-    }
+    canvas.style.transform = keyboardVisible
+      ? "translate(-50%, -60%)"
+      : "translate(-50%, -50%)";
   });
 }
 
@@ -130,13 +129,10 @@ function startGame() {
   canvas.style.display = "block";
   document.body.classList.add("playing");
   input.focus();
-
   if (music.paused) music.play();
-
-  bananas = 0;
-  maxBananas = 0;
+  bananas = 0; maxBananas = 0;
   [question, correctAnswer] = generateQuestion();
-  userAnswer = "";
+  userAnswer = ""; input.value = "";
   gameState = "game";
   loop();
 }
@@ -176,62 +172,45 @@ function showScores() {
 }
 
 // ======== DIGITAÇÃO / ENTRADA ========
-function handleKey(key) {
-  if (gameState === "game") {
-    if (key === "Enter") {
-      input.value = "";
-      if (parseInt(userAnswer) === correctAnswer) {
-        correctSound.play();
-        bananas++;
-        maxBananas=Math.max(maxBananas,bananas);
-        [question,correctAnswer]=generateQuestion();
-        userAnswer="";
-      } else {
-        wrongSound.play();
-        if (bananas>0) bananas=0;
-        else endGame();
-      }
-    } else if (key === "Backspace") {
-      userAnswer=userAnswer.slice(0,-1);
-    } else if (key === "-" && userAnswer.length===0) {
-      userAnswer = "-";
-    } else if (/\d/.test(key)) {
-      userAnswer += key;
-    }
-  }
+function setUserAnswerFromInput(raw) {
+  let s = (raw ?? "").replace(/[^\d-]/g, "");
+  if (s.includes("-")) s = (s[0]==="-"?"-":"")+s.replace(/-/g,"").replace(/^-/, "");
+  if (/^-?\d*$/.test(s)) { userAnswer = s; input.value = s; }
+  else { userAnswer = ""; input.value = ""; }
 }
 
-// Teclado físico (PC)
-document.addEventListener("keydown", e => handleKey(e.key));
-
-// Entrada virtual (celular)
-canvas.addEventListener("touchstart", () => input.focus());
-canvas.addEventListener("click", () => input.focus());
-
-// ======== CORREÇÃO DO CARACTERE INVISÍVEL E ENTRADA MÚLTIPLA ========
-input.addEventListener("input", e => {
-  let value = e.target.value.replace(/[\r\n]/g, ""); // remove quebras invisíveis
-
-  // Enter no teclado móvel
-  if (value.endsWith("\n") || value.endsWith("\r")) {
-    handleKey("Enter");
-    e.target.value = "";
+function handleKey(key) {
+  if (gameState !== "game") return;
+  if (key === "Enter") {
+    input.value = "";
+    if (parseInt(userAnswer) === correctAnswer) {
+      correctSound.play();
+      bananas++; maxBananas = Math.max(maxBananas,bananas);
+      [question, correctAnswer] = generateQuestion();
+      userAnswer = ""; input.value = "";
+    } else {
+      wrongSound.play();
+      if (bananas > 0) bananas = 0; else endGame();
+    }
     return;
   }
+  if (key === "Backspace") return setUserAnswerFromInput(userAnswer.slice(0,-1));
+  if (key === "-" && userAnswer.length===0) return setUserAnswerFromInput("-");
+  if (/\d/.test(key)) return setUserAnswerFromInput(userAnswer + key);
+}
 
-  // Verifica diferença de tamanho
-  if (value.length > userAnswer.length) {
-    const newChar = value.slice(-1);
-    handleKey(newChar);
-  } else if (value.length < userAnswer.length) {
-    handleKey("Backspace");
-  }
+// Teclado físico
+document.addEventListener("keydown", e => handleKey(e.key));
 
-  // Mantém o campo limpo apenas quando necessário
-  if (value.includes("\n") || value.includes("\r")) {
-    e.target.value = "";
-  }
+// Entrada virtual
+input.addEventListener("input", e => {
+  if (e.target.value.endsWith("\n") || e.target.value.endsWith("\r")) {
+    handleKey("Enter"); e.target.value = "";
+  } else setUserAnswerFromInput(e.target.value);
 });
+
+canvas.addEventListener("touchstart", () => input.focus());
+canvas.addEventListener("click", () => input.focus());
 
 // ======== BOTÕES ========
 btnStart.onclick = startGame;
