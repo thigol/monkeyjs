@@ -1,4 +1,4 @@
-const CACHE_NAME = "monkey-math-cache-v3";
+const CACHE_NAME = "monkey-math-cache-v5";
 const FILES_TO_CACHE = [
   "./", "./index.html", "./style.css", "./game.js", "./manifest.webmanifest",
   "./background.png", "./menu_background.png", "./score_background.png",
